@@ -333,3 +333,269 @@ Possible extensions include:
 # License
 
 This project is intended for educational and research purposes.
+# pKa Prediction using Morgan Fingerprints and Random Forest
+
+This project implements a machine learning workflow for predicting molecular **pKa values** using **Morgan fingerprints** and a **Random Forest regressor**.
+
+The project focuses on two key aspects:
+
+1. **Model optimization** (Random Forest hyperparameter tuning)
+2. **Molecular representation analysis** (Morgan fingerprint parameter tuning)
+
+The goal is not only to achieve good predictive performance, but also to understand:
+
+> **What kind of molecular information is actually important for pKa prediction?**
+
+---
+
+# Project Structure
+
+```
+pka_predictor_random_forest
+│
+├── data
+│
+├── src
+│   ├── preprocess.py
+│   ├── random_split.py
+│   ├── scaffold_split.py
+│   ├── featurize.py
+│   ├── train.py
+│   ├── evaluate.py
+│   ├── tune_rf.py
+│   ├── tune_morgan_rf.py
+│   ├── plot_tuning_results.py
+│   └── plot_morgan_tuning_results.py
+│
+├── outputs
+├── figures
+│
+├── requirements.txt
+│
+└── README.md
+```
+
+---
+
+# Workflow
+
+The project now contains two complementary workflows:
+
+## 1️⃣ Random Forest Hyperparameter Tuning
+
+```
+Raw dataset
+↓
+Preprocess
+↓
+Split (random / scaffold)
+↓
+Featurize (fixed Morgan)
+↓
+Tune Random Forest
+↓
+Evaluate
+↓
+Plot RF tuning results
+```
+
+## 2️⃣ Morgan Fingerprint Tuning (NEW)
+
+```
+Split dataset
+↓
+Loop over (radius, n_bits)
+↓
+Generate Morgan fingerprints (on-the-fly)
+↓
+Train Random Forest (fixed parameters)
+↓
+Evaluate performance
+↓
+Analyze representation quality
+↓
+Plot tuning results
+```
+
+---
+
+# Dataset Preprocessing
+
+The preprocessing step performs:
+
+- SMILES validation using RDKit
+- removal of invalid structures
+- canonicalization
+- aggregation of repeated measurements
+
+Final dataset format:
+
+```
+SMILES, pKa
+```
+
+---
+
+# Molecular Representation
+
+The model uses **Morgan fingerprints (ECFP-like)**.
+
+## Key parameters:
+
+- `radius` → size of local chemical environment
+- `n_bits` → fingerprint dimensionality
+
+## Interpretation
+
+- radius = 0 → atom-level (no structure)
+- radius = 1 → local functional groups
+- radius ≥ 2 → larger structural context
+
+---
+
+# Machine Learning Model
+
+Model: **Random Forest Regressor**
+
+Fixed configuration (for Morgan tuning):
+
+```
+n_estimators = 500
+max_depth = None
+min_samples_split = 2
+min_samples_leaf = 1
+max_features = 0.5
+```
+
+Why Random Forest:
+
+- robust to sparse fingerprints
+- handles nonlinear relationships
+- interpretable
+
+---
+
+# Dataset Splitting Strategies
+
+## Random Split
+
+- easier task
+- similar distribution
+
+## Scaffold Split
+
+- harder task
+- tests generalization across chemical scaffolds
+- more realistic
+
+---
+
+# Morgan Fingerprint Tuning (Core Contribution)
+
+We systematically evaluated:
+
+```
+radius ∈ {0, 1, 2, 3}
+n_bits ∈ {512, 1024, 2048, 4096}
+```
+
+## Key Findings
+
+### 1️⃣ Radius does NOT monotonically improve performance
+
+- radius = 1 performs best
+- radius ≥ 2 introduces noise
+- radius = 0 still provides useful baseline
+
+### 2️⃣ pKa is a local property
+
+Local chemical environments dominate pKa prediction.
+
+### 3️⃣ Larger fingerprints help
+
+- increasing `n_bits` improves performance
+- diminishing returns beyond 2048–4096
+
+### 4️⃣ Scaffold split reveals stronger trends
+
+- performance degradation is more obvious
+- confirms overfitting at larger radius
+
+## Interpretation
+
+```
+pKa ≈ functional group + local substituent effects
+```
+
+---
+
+# Running the Project
+
+## 1️⃣ Preprocess dataset
+
+```
+python src/preprocess.py
+```
+
+## 2️⃣ Split dataset
+
+```
+python src/random_split.py
+python src/scaffold_split.py
+```
+
+## 3️⃣ Train baseline model
+
+```
+python src/train.py
+```
+
+## 4️⃣ Tune Random Forest
+
+```
+python src/tune_rf.py
+```
+
+## 5️⃣ Plot RF tuning results
+
+```
+python src/plot_tuning_results.py
+```
+
+## 6️⃣ Tune Morgan fingerprint
+
+```
+python src/tune_morgan_rf.py --mode both
+```
+
+## 7️⃣ Plot Morgan tuning results
+
+```
+python src/plot_morgan_tuning_results.py
+```
+
+---
+
+# Key Takeaways
+
+1. Morgan fingerprints + Random Forest provide a strong baseline.
+2. pKa prediction is primarily driven by local chemical environments.
+3. radius = 1 is optimal for capturing functional groups and inductive effects.
+4. Larger radius introduces noise rather than useful information.
+5. Scaffold split is essential for realistic evaluation.
+
+---
+
+# Future Improvements
+
+- graph neural networks
+- quantum chemical descriptors
+- pKa site prediction
+- conformer-aware features
+- hybrid models
+
+---
+
+# License
+
+This project is intended for educational and research purposes.
