@@ -1,346 +1,14 @@
 # pKa Prediction using Morgan Fingerprints and Random Forest
 
 This project implements a machine learning workflow for predicting molecular **pKa values** using **Morgan fingerprints** and a **Random Forest regressor**.  
-The goal is to investigate how classical cheminformatics descriptors combined with ensemble learning perform on pKa prediction tasks and how model performance changes under different **data splitting strategies** and **hyperparameter configurations**.
+In this project, the predicted pKa corresponds specifically to the **acid dissociation constant of the protonated form (AH)** of a molecule, i.e., the acidity of a species after it has accepted a proton.
 
-The project includes:
+The project focuses on two complementary and equally important aspects:
 
-- dataset preprocessing
-- scaffold-based and random dataset splitting
-- Morgan fingerprint feature generation
-- Random Forest training and evaluation
-- hyperparameter tuning
-- visualization of tuning results
+1. **Model-level optimization** (Random Forest hyperparameter tuning)  
+2. **Representation-level optimization** (Morgan fingerprint parameter tuning)
 
-
-# Project Structure
-
-```
-pka_predictor_random_forest
-│
-├── data
-│
-├── src
-│   ├── preprocess.py
-│   ├── random_split.py
-│   ├── scaffold_split.py
-│   ├── featurize.py
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── tune_rf.py
-│   └── plot_tuning_results.py
-│
-├── results
-│
-├── requirements.txt
-│
-└── README.md
-```
-
-
-# Workflow
-
-The overall workflow of the project is:
-
-```
-Raw dataset
-↓
-Data cleaning (preprocess.py)
-↓
-Dataset splitting
-  • random split
-  • scaffold split
-↓
-Morgan fingerprint generation
-↓
-Random Forest training
-↓
-Hyperparameter tuning
-↓
-Model evaluation
-↓
-Visualization of results
-```
-
-
-# Dataset Preprocessing
-
-The preprocessing step performs:
-
-- SMILES validation using RDKit
-- removal of invalid structures
-- canonicalization of molecules
-- aggregation of repeated measurements
-- extraction of final dataset containing:
-
-```
-SMILES, pKa
-```
-
-
-# Molecular Representation
-
-The model uses **Morgan fingerprints** as molecular descriptors.
-
-Morgan fingerprints are circular fingerprints generated using the Morgan algorithm (similar to ECFP).
-
-Advantages:
-
-- captures local atomic environments
-- invariant to atom ordering
-- widely used in cheminformatics
-
-Typical parameters:
-
-- radius = 2
-- binary bit vector
-
-
-# Machine Learning Model
-
-The model used is a **Random Forest Regressor**.
-
-Random Forest is an ensemble learning method based on bagging and decision trees.
-
-Advantages:
-
-- robust to overfitting
-- works well with sparse fingerprints
-- interpretable hyperparameters
-
-Key hyperparameters explored:
-
-- `n_estimators`
-- `max_depth`
-- `max_features`
-- `min_samples_split`
-- `min_samples_leaf`
-
-
-# Dataset Splitting Strategies
-
-Two splitting strategies were compared.
-
-
-## Random Split
-
-Randomly distributes molecules into:
-
-- training set
-- validation set
-- test set
-
-Advantages:
-
-- balanced distribution
-- easier prediction task
-
-Disadvantages:
-
-- training and test molecules may share similar scaffolds
-
-
-## Scaffold Split
-
-Uses **Bemis–Murcko scaffolds** to group molecules.
-
-Molecules sharing the same scaffold are placed into the same dataset split.
-
-Advantages:
-
-- better simulation of real-world generalization
-- prevents scaffold leakage
-
-Disadvantages:
-
-- harder prediction task
-
-
-# Model Performance Comparison
-
-Figure 1 compares the average performance of models trained under random and scaffold splitting strategies.
-
-```
-results/figure_1_metric_means_random_vs_scaffold.png
-```
-
-Observations:
-
-- Random split produces better validation performance.
-- Scaffold split results in higher prediction error.
-- This indicates scaffold-based evaluation is a more challenging and realistic task.
-
-
-# Hyperparameter Tuning
-
-Hyperparameter tuning was performed by grid search across several parameters.
-
-The effect of each parameter on validation MAE is shown below.
-
-
-## Effect of max_depth
-
-```
-results/figure_2_max_depth_val_mae_comparison.png
-```
-
-Observation:
-
-Increasing tree depth generally improves model performance until saturation.
-
-
-## Effect of max_features
-
-```
-results/figure_2_max_features_val_mae_comparison.png
-```
-
-Observation:
-
-Using larger feature subsets significantly improves performance compared to `sqrt` or `log2`.
-
-
-## Effect of min_samples_leaf
-
-```
-results/figure_2_min_samples_leaf_val_mae_comparison.png
-```
-
-
-## Effect of min_samples_split
-
-```
-results/figure_2_min_samples_split_val_mae_comparison.png
-```
-
-
-## Effect of n_estimators
-
-```
-results/figure_2_n_estimators_val_mae_comparison.png
-```
-
-
-# Best Hyperparameter Combinations
-
-The best hyperparameter combinations based on validation MAE are summarized below.
-
-```
-results/table_1_best_hyperparameters.png
-```
-
-
-# Example Best Model Performance
-
-Random split best model:
-
-```
-Validation MAE  = 0.866
-Validation RMSE = 1.225
-Validation R²   = 0.850
-```
-
-Scaffold split best model:
-
-```
-Validation MAE  = 1.263
-Validation RMSE = 1.637
-Validation R²   = 0.621
-```
-
-
-# Installation
-
-Install dependencies using:
-
-```
-pip install -r requirements.txt
-```
-
-or using conda:
-
-```
-conda install -c conda-forge rdkit scikit-learn pandas matplotlib numpy
-```
-
-
-# Running the Project
-
-
-## 1 Preprocess dataset
-
-```
-python src/preprocess.py
-```
-
-
-## 2 Split dataset
-
-Random split
-
-```
-python src/random_split.py
-```
-
-Scaffold split
-
-```
-python src/scaffold_split.py
-```
-
-
-## 3 Train model
-
-```
-python src/train.py
-```
-
-
-## 4 Hyperparameter tuning
-
-```
-python src/tune_rf.py
-```
-
-
-## 5 Plot results
-
-```
-python src/plot_tuning_results.py
-```
-
-
-# Key Takeaways
-
-1. Morgan fingerprints combined with Random Forest provide strong baseline performance for pKa prediction.
-2. Scaffold-based splitting reveals the true generalization ability of the model.
-3. Increasing `max_features` significantly improves performance.
-4. Increasing tree depth improves performance but with diminishing returns.
-5. Increasing the number of trees improves stability but increases computation cost.
-
-
-# Future Improvements
-
-Possible extensions include:
-
-- graph neural networks
-- molecular descriptors beyond fingerprints
-- pKa site prediction
-- conformer-aware features
-- larger datasets
-
-
-# License
-
-This project is intended for educational and research purposes.
-# pKa Prediction using Morgan Fingerprints and Random Forest
-
-This project implements a machine learning workflow for predicting molecular **pKa values** using **Morgan fingerprints** and a **Random Forest regressor**.
-
-The project focuses on two key aspects:
-
-1. **Model optimization** (Random Forest hyperparameter tuning)
-2. **Molecular representation analysis** (Morgan fingerprint parameter tuning)
+Together, these two components allow us to systematically study how both model capacity and molecular representation affect pKa prediction performance.
 
 The goal is not only to achieve good predictive performance, but also to understand:
 
@@ -381,7 +49,7 @@ pka_predictor_random_forest
 
 The project now contains two complementary workflows:
 
-## 1️⃣ Random Forest Hyperparameter Tuning
+## 1️⃣ Random Forest Hyperparameter Tuning (Core Component)
 
 ```
 Raw dataset
@@ -399,7 +67,7 @@ Evaluate
 Plot RF tuning results
 ```
 
-## 2️⃣ Morgan Fingerprint Tuning (NEW)
+## 2️⃣ Morgan Fingerprint Tuning (Core Component)
 
 ```
 Split dataset
@@ -439,6 +107,26 @@ SMILES, pKa
 # Molecular Representation
 
 The model uses **Morgan fingerprints (ECFP-like)**.
+
+---
+
+## Definition of pKa in this Project
+
+In this work, pKa is defined as:
+
+\[
+\mathrm{AH \rightleftharpoons A^- + H^+}
+\]
+
+where the molecule of interest is the **protonated species (AH)**.
+
+This means:
+
+- The model predicts how easily a **protonated molecule loses a proton**
+- For basic molecules (e.g., amines), this corresponds to the acidity of their conjugate acids
+- For acidic molecules, this aligns with the usual acid dissociation definition
+
+---
 
 ## Key parameters:
 
@@ -526,6 +214,109 @@ Local chemical environments dominate pKa prediction.
 ```
 pKa ≈ functional group + local substituent effects
 ```
+
+---
+
+# Results and Analysis
+
+This section summarizes key findings from both **Random Forest hyperparameter tuning** and **Morgan fingerprint tuning**.
+
+## 1️⃣ Random Forest Hyperparameter Tuning
+
+We evaluated the effect of several key hyperparameters:
+
+- `max_depth`
+- `max_features`
+- `min_samples_leaf`
+- `min_samples_split`
+- `n_estimators`
+
+### Key Observations
+
+#### (1) Model complexity vs generalization
+
+- Increasing `max_depth` consistently improves performance  
+- Best performance achieved at `max_depth = None`  
+- Indicates that shallow trees underfit the data
+
+#### (2) Feature subsampling is critical
+
+- `max_features = 0.5` performs best  
+- Too small (`0.3`) → underfitting  
+- Too large (`log2`) → increased variance and worse MAE  
+
+#### (3) Leaf size controls bias-variance tradeoff
+
+- `min_samples_leaf = 1` gives best performance  
+- Larger values increase bias and degrade accuracy  
+
+#### (4) Split constraint has minor effect
+
+- `min_samples_split` shows limited influence  
+- Suggests dataset is not highly sensitive to this parameter  
+
+#### (5) Number of trees saturates quickly
+
+- Increasing `n_estimators` beyond ~500 provides minimal improvement  
+- Confirms diminishing returns for ensemble size  
+
+#### (6) Random vs Scaffold split
+
+- Scaffold split consistently yields higher MAE  
+- Demonstrates limited generalization across chemical scaffolds  
+
+---
+
+## 2️⃣ Morgan Fingerprint Tuning
+
+We systematically evaluated:
+
+```
+radius ∈ {0, 1, 2, 3}
+n_bits ∈ {512, 1024, 2048, 4096}
+```
+
+### Key Observations
+
+#### (1) Locality dominates
+
+- `radius = 1` consistently performs best  
+- Confirms that pKa is primarily determined by **local chemical environments**
+
+#### (2) Larger radius introduces noise
+
+- `radius ≥ 2` leads to worse performance  
+- Suggests global structure is less relevant than local functional context  
+
+#### (3) Radius = 0 still works
+
+- Even atom-level features provide useful signal  
+- Indicates strong correlation between atom types and pKa  
+
+#### (4) Increasing dimensionality helps
+
+- Larger `n_bits` improves performance  
+- Especially important for avoiding hash collisions  
+
+#### (5) Scaffold split amplifies trends
+
+- Performance degradation is more pronounced  
+- Confirms overfitting when using overly large radius  
+
+---
+
+## 3️⃣ Combined Insight
+
+The overall model behavior can be summarized as:
+
+```
+pKa prediction ≈ local chemical environment + nonlinear mapping (Random Forest)
+```
+
+- Morgan fingerprint defines **what information is available**
+- Random Forest defines **how that information is used**
+
+Optimal performance requires balancing both.
 
 ---
 
